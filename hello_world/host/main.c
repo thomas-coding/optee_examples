@@ -90,6 +90,16 @@ int main(void)
 			res, err_origin);
 	printf("TA incremented value to %d\n", op.params[0].value.a);
 
+#if 0 // for secure storage test
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_NONE, TEEC_NONE,
+					 TEEC_NONE, TEEC_NONE);
+	res = TEEC_InvokeCommand(&sess, TA_HELLO_WORLD_CMD_FILE_TEST, &op,
+				 &err_origin);
+	if (res != TEEC_SUCCESS)
+		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+			res, err_origin);
+#endif
+
 	/*
 	 * We're done with the TA, close the session and
 	 * destroy the context.

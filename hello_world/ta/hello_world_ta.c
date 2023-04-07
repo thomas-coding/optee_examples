@@ -133,6 +133,57 @@ static TEE_Result dec_value(uint32_t param_types,
 
 	return TEE_SUCCESS;
 }
+
+static TEE_Result file_test(__unused uint32_t param_types,
+	__unused TEE_Param params[4])
+{
+	char obj_id[] = "test";
+	uint32_t obj_data_flag;
+	TEE_Result res;
+	TEE_ObjectHandle object;
+	char data[8];
+
+	DMSG("file_test has been called");
+
+	for(int i = 0; i < 8; i++)
+		data[i] = i;
+
+	/*
+	 * Create object in secure storage and fill with data
+	 */
+	obj_data_flag = TEE_DATA_FLAG_ACCESS_READ |		/* we can later read the oject */
+			TEE_DATA_FLAG_ACCESS_WRITE |		/* we can later write into the object */
+			TEE_DATA_FLAG_ACCESS_WRITE_META |	/* we can later destroy or rename the object */
+			TEE_DATA_FLAG_OVERWRITE;		/* destroy existing object of same ID */
+
+	res = TEE_CreatePersistentObject(TEE_STORAGE_PRIVATE_RPMB,
+					obj_id, sizeof(obj_id),
+					obj_data_flag,
+					TEE_HANDLE_NULL,
+					NULL, 0,		/* we may not fill it right now */
+					&object);
+	if (res != TEE_SUCCESS) {
+		EMSG("TEE_CreatePersistentObject failed 0x%08x", res);
+		return res;
+	}
+
+#if 0
+	res = TEE_WriteObjectData(object, data, 8);
+	if (res != TEE_SUCCESS) {
+		EMSG("TEE_WriteObjectData failed 0x%08x", res);
+		TEE_CloseAndDeletePersistentObject1(object);
+	} else {
+		TEE_CloseObject(object);
+	}
+#else
+	TEE_CloseAndDeletePersistentObject1(object);
+	//TEE_CloseObject(object);
+#endif
+
+
+	return TEE_SUCCESS;
+}
+
 /*
  * Called when a TA is invoked. sess_ctx hold that value that was
  * assigned by TA_OpenSessionEntryPoint(). The rest of the paramters
@@ -149,6 +200,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 		return inc_value(param_types, params);
 	case TA_HELLO_WORLD_CMD_DEC_VALUE:
 		return dec_value(param_types, params);
+	case TA_HELLO_WORLD_CMD_FILE_TEST:
+		return file_test(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
